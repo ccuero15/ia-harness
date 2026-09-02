@@ -1,0 +1,23 @@
+{
+  "project_metadata": {
+    "skill_governance_version": "2.4.0",
+    "target_efficiency_threshold": 0.92
+  },
+  "evaluations": [
+    {
+      "task_id": "T-001",
+      "assertions": [
+        {
+          "criterion": "single_owner_assignment",
+          "condition": "count(responsables) == 1",
+          "error_message": "Fallo crítico de Accountability: La tarea tiene múltiples responsables asignados. Reducir a un solo líder operacional."
+        },
+        {
+          "criterion": "tangible_deliverable",
+          "condition": "entregable.contiene_formato_verificable() == true",
+          "error_message": "El entregable es abstracto. Reemplazar descripciones narrativas por un artefacto digital o físico indexable."
+        }
+      ]
+    }
+  ]
+}

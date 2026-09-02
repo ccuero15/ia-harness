@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json.schemastore.org/partial-gemini-settings.json",
+  "mcpServers": {
+    "obsidian": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp<2",
+        "python",
+        "<PATH_TO_OBSIDIAN_MCP_SERVER>/server.py"
+      ],
+      "env": {
+        "OBSIDIAN_VAULT_PATH": "<PATH_TO_YOUR_OBSIDIAN_VAULT>"
+      }
+    },
+    "notebooklm": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "notebooklm-mcp@latest"
+      ]
+    },
+    "engram": {
+      "command": "engram",
+      "args": [
+        "mcp"
+      ]
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_TOKEN}"
+      }
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ]
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-puppeteer"
+      ],
+      "env": {
+        "PUPPETEER_EXECUTABLE_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+      }
+    },
+    "next-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "next-devtools-mcp@latest"
+      ]
+    }
+  },
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "name": "context-pipeline",
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \"./hooks/session-start.ps1\"",
+            "timeout": 5000,
+            "description": "Context Pipeline: inyecta AGENTS.md + constitution + projects.json en el system prompt"
+          }
+        ]
+      }
+    ],
+    "BeforeTool": [
+      {
+        "matcher": "write_file|edit_file|replace|run_shell_command",
+        "hooks": [
+          {
+            "name": "rbac-dispatcher",
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \"./hooks/before-tool.ps1\"",
+            "timeout": 3000,
+            "description": "Runtime Hook Dispatcher: valida tool.execute.before contra RBAC"
+          }
+        ]
+      }
+    ],
+    "AfterTool": [
+      {
+        "matcher": "run_shell_command",
+        "hooks": [
+          {
+            "name": "tool-audit",
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \"./hooks/after-tool.ps1\"",
+            "timeout": 3000,
+            "description": "Audita ejecuciones de tools en ~/.gemini/logs/tool-audit.log"
+          }
+        ]
+      }
+    ]
+  }
+}

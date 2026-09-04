@@ -42,14 +42,13 @@ El repositorio `ia-harness` sirve como **fuente canónica de verdad y distribuci
 
 | Archivo / Carpeta en `ia-harness` (Distribución) | Destino Global en el Host (Runtime) | Propósito |
 |---|---|---|
-| `GEMINI.md` | `~/.gemini/GEMINI.md` | Entry point global para el motor Gemini / Antigravity |
-| `.specify/memory/constitution.md` | `~/.gemini/.specify/memory/constitution.md` | Reglas no negociables compartidas |
-| `.specify/templates/` | `~/.gemini/.specify/templates/` | Templates oficiales: `spec-template.md`, `plan-template.md`, `tasks-template.md` |
-| `.agent/workflows/` | `~/.gemini/.agent/workflows/` | 7 workflows ejecutables speckit: `constitution` → `specify` → `clarify` → `planning` → `tasks` → `implement` → `memory-sync` |
-| `hooks/` | `~/.gemini/hooks/` | Hooks de runtime: `session-start.ps1`, `before-tool.ps1`, `after-tool.ps1` |
-| `settings.example.json` | `~/.gemini/settings.json` (si no existe) | Configuración de referencia sanitizada de servidores MCP y hooks |
-| `opencode/.agents/skills/` | `~/.gemini/.agent/skills/` y `~/.agents/skills/` | 26 skills canónicas ejecutadas globalmente por subagentes de ambos motores |
-| `opencode/opencode.jsonc` | `~/.config/opencode/opencode.json` | Configuración global, agentes y permisos de OpenCode |
+| `gemini/GEMINI.md` | `~/.gemini/GEMINI.md` | Entry point global para el motor Gemini / Antigravity |
+| `gemini/.specify/memory/constitution.md` | `~/.gemini/.specify/memory/constitution.md` | Reglas no negociables de la constitución |
+| `gemini/.specify/templates/` | `~/.gemini/.specify/templates/` | Templates oficiales: `spec-template.md`, `plan-template.md`, `tasks-template.md` |
+| `gemini/.agent/workflows/` | `~/.gemini/.agent/workflows/` | 7 workflows ejecutables speckit: `constitution` → `specify` → `clarify` → `planning` → `tasks` → `implement` → `memory-sync` |
+| `gemini/hooks/` | `~/.gemini/hooks/` | Hooks de runtime: `session-start.ps1`, `before-tool.ps1`, `after-tool.ps1` |
+| `gemini/settings.example.json` | `~/.gemini/settings.json` (si no existe) | Configuración de referencia sanitizada de servidores MCP y hooks |
+| `gemini/.agent/skills/` | `~/.gemini/.agent/skills/` | 26 skills canónicas ejecutadas globalmente por subagentes |
 | `specs/` | `specs/` (en cada proyecto) | Especificaciones de features activas (`specs/NNN-slug/{spec,plan,tasks}.md`) |
 
 > [!IMPORTANT]

@@ -1,24 +1,25 @@
-<#
+﻿<#
 .SYNOPSIS
     Instalador global del IA Harness para Windows (PowerShell).
 .DESCRIPTION
-    Copia e instala los componentes del repositorio ia-harness en las rutas
-    globales canónicas del host (~/.gemini y ~/.agents/skills), desacoplando
-    la ejecución del entorno local de cada proyecto.
+    Copia e instala los componentes de ia-harness en las rutas globales canónicas
+    del host (~/.gemini y ~/.agents/skills) de forma modular y desacoplada.
 .PARAMETER Engine
-    Motor a instalar: 'All', 'Gemini', 'OpenCode'. Por defecto 'All'.
+    Motor a instalar: 'Gemini', 'OpenCode', 'All'. Si no se especifica, despliega un menú interactivo.
 .PARAMETER Force
     Sobrescribe archivos de configuración existentes si se especifica.
 .EXAMPLE
-    .\scripts\install-harness.ps1 -Engine All
+    .\scripts\install-harness.ps1
     .\scripts\install-harness.ps1 -Engine Gemini
     .\scripts\install-harness.ps1 -Engine OpenCode
+    .\scripts\install-harness.ps1 -Engine All
+    .\scripts\install-harness.ps1 -Force
 #>
 
 [CmdletBinding()]
 param(
     [ValidateSet('All', 'Gemini', 'OpenCode')]
-    [string]$Engine = 'All',
+    [string]$Engine,
     [switch]$Force
 )
 
@@ -29,16 +30,53 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
 $UserHome = if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME }
 
-# Rutas de origen en el repositorio
-$SkillsSource         = Join-Path $RepoRoot "opencode\.agents\skills"
-$WorkflowsSource      = Join-Path $RepoRoot ".agent\workflows"
-$SpecifySource        = Join-Path $RepoRoot ".specify"
-$HooksSource          = Join-Path $RepoRoot "hooks"
-$GeminiMDSource       = Join-Path $RepoRoot "GEMINI.md"
-$SettingsSource       = Join-Path $RepoRoot "settings.example.json"
-$OpenCodeConfigSource = Join-Path $RepoRoot "opencode\opencode.jsonc"
+# Menú interactivo si no se especifica -Engine
+if (-not $Engine) {
+    Write-Host "============================================================" -ForegroundColor Magenta
+    Write-Host "         IA HARNESS — INSTALADOR GLOBAL DE RUNTIME         " -ForegroundColor Magenta
+    Write-Host "============================================================" -ForegroundColor Magenta
+    Write-Host "Seleccione el entorno a instalar en este equipo:`n"
+    Write-Host "  [1] Gemini / Antigravity" -ForegroundColor Cyan
+    Write-Host "  [2] OpenCode" -ForegroundColor Cyan
+    Write-Host "  [3] Ambas (Instalaciones independientes sin mezclar)" -ForegroundColor Cyan
+    Write-Host "  [Q] Salir" -ForegroundColor Gray
+    Write-Host ""
+    $choice = Read-Host "Opción [1-3, Q]"
+    switch ($choice.Trim().ToUpper()) {
+        '1' { $Engine = 'Gemini' }
+        '2' { $Engine = 'OpenCode' }
+        '3' { $Engine = 'All' }
+        'Q' {
+            Write-Host "`nInstalación cancelada por el usuario." -ForegroundColor Yellow
+            return
+        }
+        default {
+            Write-Error "Opción inválida: '$choice'. Abortando instalación."
+            return
+        }
+    }
+}
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Rutas de origen en el repositorio (Aisladas por motor)
+# ─────────────────────────────────────────────────────────────────────────────
+# Gemini
+$GeminiDir            = Join-Path $RepoRoot "gemini"
+$GeminiSkillsSource   = Join-Path $GeminiDir ".agent\skills"
+$WorkflowsSource      = Join-Path $GeminiDir ".agent\workflows"
+$SpecifySource        = Join-Path $GeminiDir ".specify"
+$HooksSource          = Join-Path $GeminiDir "hooks"
+$GeminiMDSource       = Join-Path $GeminiDir "GEMINI.md"
+$SettingsSource       = Join-Path $GeminiDir "settings.example.json"
+
+# OpenCode
+$OpenCodeDir          = Join-Path $RepoRoot "opencode"
+$OpenCodeSkillsSource = Join-Path $OpenCodeDir ".agents\skills"
+$OpenCodeConfigSource = Join-Path $OpenCodeDir "opencode.jsonc"
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Rutas de destino globales en el host
+# ─────────────────────────────────────────────────────────────────────────────
 $GeminiBaseDir        = Join-Path $UserHome ".gemini"
 $GeminiSkillsDir      = Join-Path $GeminiBaseDir ".agent\skills"
 $GeminiWorkflowsDir   = Join-Path $GeminiBaseDir ".agent\workflows"
@@ -73,11 +111,12 @@ function Write-Warn {
 
 function Copy-SkillsTo {
     param(
+        [string]$SourceDir,
         [string]$DestinationDir,
         [string]$EngineName
     )
-    if (-not (Test-Path $SkillsSource)) {
-        Write-Warn "Directorio de origen de skills no encontrado: $SkillsSource"
+    if (-not (Test-Path $SourceDir)) {
+        Write-Warn "Directorio de origen de skills no encontrado: $SourceDir"
         return
     }
 
@@ -86,7 +125,7 @@ function Copy-SkillsTo {
         Write-Info "Creado directorio: $DestinationDir"
     }
 
-    $skillDirs = Get-ChildItem -Path $SkillsSource -Directory
+    $skillDirs = Get-ChildItem -Path $SourceDir -Directory
     $count = 0
     foreach ($dir in $skillDirs) {
         $dest = Join-Path $DestinationDir $dir.Name
@@ -99,7 +138,7 @@ function Copy-SkillsTo {
     Write-Success "$count skills instaladas en $DestinationDir ($EngineName)"
 }
 
-Write-Host "============================================================" -ForegroundColor Magenta
+Write-Host "`n============================================================" -ForegroundColor Magenta
 Write-Host "         IA HARNESS — INSTALADOR GLOBAL DE RUNTIME         " -ForegroundColor Magenta
 Write-Host "============================================================" -ForegroundColor Magenta
 Write-Info "Repositorio Fuente : $RepoRoot"
@@ -112,8 +151,8 @@ Write-Info "Motor Seleccionado : $Engine"
 if ($Engine -eq 'All' -or $Engine -eq 'Gemini') {
     Write-Step "Instalando runtime para Gemini / Antigravity..."
 
-    # 1. Skills
-    Copy-SkillsTo -DestinationDir $GeminiSkillsDir -EngineName "Gemini"
+    # 1. Skills (desde gemini/.agent/skills)
+    Copy-SkillsTo -SourceDir $GeminiSkillsSource -DestinationDir $GeminiSkillsDir -EngineName "Gemini"
 
     # 2. Workflows
     if (Test-Path $WorkflowsSource) {
@@ -174,8 +213,8 @@ if ($Engine -eq 'All' -or $Engine -eq 'Gemini') {
 if ($Engine -eq 'All' -or $Engine -eq 'OpenCode') {
     Write-Step "Instalando runtime para OpenCode..."
 
-    # 1. Skills globales (~/.agents/skills)
-    Copy-SkillsTo -DestinationDir $OpenCodeSkillsDir -EngineName "OpenCode"
+    # 1. Skills globales (~/.agents/skills desde opencode/.agents/skills)
+    Copy-SkillsTo -SourceDir $OpenCodeSkillsSource -DestinationDir $OpenCodeSkillsDir -EngineName "OpenCode"
 
     # 2. Configuración (~/.config/opencode/opencode.json)
     if (-not (Test-Path $OpenCodeConfigDir)) {

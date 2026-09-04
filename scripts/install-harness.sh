@@ -88,6 +88,7 @@ SETTINGS_SRC="${GEMINI_DIR}/settings.example.json"
 OPENCODE_DIR="${REPO_ROOT}/opencode"
 OPENCODE_SKILLS_SRC="${OPENCODE_DIR}/.agents/skills"
 OPENCODE_CONFIG_SRC="${OPENCODE_DIR}/opencode.jsonc"
+OPENCODE_AGENTS_SRC="${OPENCODE_DIR}/AGENTS.md"
 
 # Rutas de destino globales en el host
 GEMINI_BASE="${USER_HOME}/.gemini"
@@ -101,6 +102,7 @@ GEMINI_SETTINGS="${GEMINI_BASE}/settings.json"
 OPENCODE_SKILLS="${USER_HOME}/.agents/skills"
 OPENCODE_CONFIG_DIR="${USER_HOME}/.config/opencode"
 OPENCODE_CONFIG="${OPENCODE_CONFIG_DIR}/opencode.json"
+OPENCODE_AGENTS="${OPENCODE_CONFIG_DIR}/AGENTS.md"
 
 echo -e "\n${CLR_MAGENTA}============================================================${CLR_RESET}"
 echo -e "${CLR_MAGENTA}         IA HARNESS — INSTALADOR GLOBAL DE RUNTIME         ${CLR_RESET}"
@@ -192,8 +194,13 @@ if [[ "${ENGINE}" == "All" || "${ENGINE}" == "OpenCode" ]]; then
   # 1. Skills globales (~/.agents/skills)
   copy_skills "${OPENCODE_SKILLS_SRC}" "${OPENCODE_SKILLS}" "OpenCode"
 
-  # 2. Configuración (~/.config/opencode/opencode.json)
+  # 2. Configuración y directrices (~/.config/opencode/)
   mkdir -p "${OPENCODE_CONFIG_DIR}"
+  if [[ -f "${OPENCODE_AGENTS_SRC}" ]]; then
+    cp "${OPENCODE_AGENTS_SRC}" "${OPENCODE_AGENTS}"
+    echo -e "  ${CLR_GREEN}[OK] Directrices AGENTS.md instaladas en ${OPENCODE_AGENTS}${CLR_RESET}"
+  fi
+
   if [[ ! -f "${OPENCODE_CONFIG}" ]]; then
     if [[ -f "${OPENCODE_CONFIG_SRC}" ]]; then
       cp "${OPENCODE_CONFIG_SRC}" "${OPENCODE_CONFIG}"

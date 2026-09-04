@@ -22,6 +22,9 @@ Este repositorio proporciona una arquitectura física desacoplada y reproducible
 > - Asumir un motor por defecto sin confirmación previa del usuario.
 > - Mezclar intenciones o instalar componentes cruzados entre motores.
 > - Configurar rutas relativas locales como `./.agents/skills` en proyectos o repositorios analizados.
+>
+> 📖 **Guía Oficial de Instalación Paso a Paso:**  
+> Consulta el protocolo canónico para agentes y humanos en [`INSTALL.md`](file:///c:/Users/ccuero/Desktop/ia-harness/INSTALL.md).
 
 ---
 
@@ -53,6 +56,7 @@ ia-harness/
 │   ├── install-harness.ps1           # Instalador interactivo para Windows (PowerShell)
 │   └── install-harness.sh            # Instalador interactivo para Linux / macOS (Bash)
 │
+├── INSTALL.md                        # Protocolo canónico de instalación host-level para agentes IA y humanos
 └── README.md                         # Este documento de arquitectura unificada y mandatos
 ```
 
@@ -115,6 +119,10 @@ flowchart LR
 ---
 
 ## 🛠️ Menú Interactivo e Instalación
+
+> [!IMPORTANT]
+> **Guía Oficial de Instalación para Agentes IA y Operadores:**  
+> Para consultar la especificación detallada de rutas, variables de entorno, mandatos de enrutamiento y comandos de verificación post-instalación, consulta [`INSTALL.md`](file:///c:/Users/ccuero/Desktop/ia-harness/INSTALL.md).
 
 Al ejecutar el script de instalación sin argumentos, se despliega automáticamente un menú interactivo por consola:
 
@@ -295,6 +303,7 @@ El archivo [`gemini/settings.example.json`](file:///c:/Users/ccuero/Desktop/ia-h
 ## 🚀 Guía de Inicio Rápido
 
 1. **Instalación Global del Runtime en la Máquina**:
+   - Sigue el protocolo en [`INSTALL.md`](file:///c:/Users/ccuero/Desktop/ia-harness/INSTALL.md) o ejecuta directamente el instalador correspondiente:
    - En **Windows (PowerShell)**:
      ```powershell
      powershell -ExecutionPolicy Bypass -File .\scripts\install-harness.ps1

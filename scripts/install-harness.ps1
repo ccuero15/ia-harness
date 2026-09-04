@@ -73,6 +73,7 @@ $SettingsSource       = Join-Path $GeminiDir "settings.example.json"
 $OpenCodeDir          = Join-Path $RepoRoot "opencode"
 $OpenCodeSkillsSource = Join-Path $OpenCodeDir ".agents\skills"
 $OpenCodeConfigSource = Join-Path $OpenCodeDir "opencode.jsonc"
+$OpenCodeAgentsSource = Join-Path $OpenCodeDir "AGENTS.md"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Rutas de destino globales en el host
@@ -88,6 +89,7 @@ $GeminiSettingsTarget = Join-Path $GeminiBaseDir "settings.json"
 $OpenCodeSkillsDir    = Join-Path $UserHome ".agents\skills"
 $OpenCodeConfigDir    = Join-Path $UserHome ".config\opencode"
 $OpenCodeConfigTarget = Join-Path $OpenCodeConfigDir "opencode.json"
+$OpenCodeAgentsTarget = Join-Path $OpenCodeConfigDir "AGENTS.md"
 
 function Write-Step {
     param([string]$Message)
@@ -216,10 +218,15 @@ if ($Engine -eq 'All' -or $Engine -eq 'OpenCode') {
     # 1. Skills globales (~/.agents/skills desde opencode/.agents/skills)
     Copy-SkillsTo -SourceDir $OpenCodeSkillsSource -DestinationDir $OpenCodeSkillsDir -EngineName "OpenCode"
 
-    # 2. Configuración (~/.config/opencode/opencode.json)
+    # 2. Configuración y directrices (~/.config/opencode/)
     if (-not (Test-Path $OpenCodeConfigDir)) {
         New-Item -ItemType Directory -Path $OpenCodeConfigDir -Force | Out-Null
         Write-Info "Creado directorio: $OpenCodeConfigDir"
+    }
+
+    if (Test-Path $OpenCodeAgentsSource) {
+        Copy-Item -Path $OpenCodeAgentsSource -Destination $OpenCodeAgentsTarget -Force
+        Write-Success "Directrices AGENTS.md instaladas en $OpenCodeAgentsTarget"
     }
 
     if (-not (Test-Path $OpenCodeConfigTarget)) {

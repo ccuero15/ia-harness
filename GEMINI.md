@@ -21,7 +21,7 @@ Sistema multi-agente con orquestador y subagentes especializados siguiendo SDD
    - **Obsidian**: Vault de memoria duradera. Al finalizar un feature, `speckit.memory-sync` depura y promueve el conocimiento persistente.
 6. **Token-Thrift & Eficiencia de Contexto**: Minimizar context window. No asignar tareas con decenas de archivos simultáneos. Desglosar problemas en tareas atómicas. Guardar decisiones al cerrar sesión con `engram_mem_session_summary`.
 7. **Regla de Exploración (Graphify-first)**: No usar `grep`, `findstr` o comandos manuales recursivos en consola para leer o mapear dependencias. Usar siempre herramientas de grafo / AST o MCP Graphify para mapear la arquitectura.
-8. **Skills modulares**: Cada subagente carga su skill correspondiente antes de operar (ubicadas en `.agent/skills/` y `opencode/.agents/skills/`).
+8. **Skills y Runtime Globales (Host-Level Execution)**: Las skills, workflows y hooks operan y se leen **EXCLUSIVAMENTE desde las rutas globales del ordenador** (`~/.gemini/.agent/skills/`, `~/.gemini/hooks/`, `~/.gemini/.agent/workflows/`), **NUNCA** desde la carpeta de un proyecto individual ni desde dependencias locales del repositorio analizado. El repositorio `ia-harness` es el repositorio de distribución y fuente canónica de verdad; para operar, sus componentes deben instalarse/copiarse en la máquina del usuario ejecutando `scripts/install-harness.ps1` (Windows) o `scripts/install-harness.sh` (Linux/macOS).
 
 ## Subagentes y Roles
 
@@ -36,18 +36,25 @@ Sistema multi-agente con orquestador y subagentes especializados siguiendo SDD
 
 *Skills complementarias disponibles en el harness: `pm_lead`, `daily_analysis`, `frontend-design`, `interface-design`, `gsap`, `solid`, `vertical-slice-architecture`, `agile-delivery-governance`, `subagent-driven-development`, `test-driven-development`, `systematic-debugging`, `verification-before-completion`.*
 
-## Mapa de Archivos del Harness
+## Mapa de Archivos y Runtime del Harness
 
-| Archivo / Carpeta | Propósito |
-|---|---|
-| `GEMINI.md` | Entry point para el motor Gemini / Antigravity |
-| `.specify/memory/constitution.md` | Reglas no negociables compartidas por todos los motores y agentes |
-| `.specify/templates/` | Templates oficiales: `spec-template.md`, `plan-template.md`, `tasks-template.md` |
-| `.agent/workflows/` | 7 workflows ejecutables speckit: `constitution` → `specify` → `clarify` → `planning` → `tasks` → `implement` → `memory-sync` |
-| `hooks/` | Hooks de runtime: `session-start.ps1`, `before-tool.ps1`, `after-tool.ps1` |
-| `settings.example.json` | Configuración de referencia sanitizada de servidores MCP y hooks |
-| `opencode/` | Motor OpenCode (`opencode.jsonc`, `AGENTS.md`, `.agents/skills/`) |
-| `specs/` | Especificaciones de features activas (`specs/NNN-slug/{spec,plan,tasks}.md`) |
+El repositorio `ia-harness` sirve como **fuente canónica de verdad y distribución**. En tiempo de ejecución (runtime), los motores consumen los assets instalados a nivel de host en las rutas globales del ordenador:
+
+| Archivo / Carpeta en `ia-harness` (Distribución) | Destino Global en el Host (Runtime) | Propósito |
+|---|---|---|
+| `GEMINI.md` | `~/.gemini/GEMINI.md` | Entry point global para el motor Gemini / Antigravity |
+| `.specify/memory/constitution.md` | `~/.gemini/.specify/memory/constitution.md` | Reglas no negociables compartidas |
+| `.specify/templates/` | `~/.gemini/.specify/templates/` | Templates oficiales: `spec-template.md`, `plan-template.md`, `tasks-template.md` |
+| `.agent/workflows/` | `~/.gemini/.agent/workflows/` | 7 workflows ejecutables speckit: `constitution` → `specify` → `clarify` → `planning` → `tasks` → `implement` → `memory-sync` |
+| `hooks/` | `~/.gemini/hooks/` | Hooks de runtime: `session-start.ps1`, `before-tool.ps1`, `after-tool.ps1` |
+| `settings.example.json` | `~/.gemini/settings.json` (si no existe) | Configuración de referencia sanitizada de servidores MCP y hooks |
+| `opencode/.agents/skills/` | `~/.gemini/.agent/skills/` y `~/.agents/skills/` | 26 skills canónicas ejecutadas globalmente por subagentes de ambos motores |
+| `opencode/opencode.jsonc` | `~/.config/opencode/opencode.json` | Configuración global, agentes y permisos de OpenCode |
+| `specs/` | `specs/` (en cada proyecto) | Especificaciones de features activas (`specs/NNN-slug/{spec,plan,tasks}.md`) |
+
+> [!IMPORTANT]
+> **Protocolo de Skills para Agentes**:
+> Queda estrictamente prohibido que cualquier agente intente resolver o cargar skills, workflows o hooks desde una ruta relativa local (`./.agent/skills`, `./.agents/skills`, `./hooks`). Todo agente debe resolver e invocar las herramientas exclusivamente desde `~/.gemini/.agent/skills/` (para Gemini) o `~/.agents/skills/` (para OpenCode). Si las skills no existen en el host, debe ejecutarse primero el instalador del harness.
 
 ## Protocolo de Ejecución SDD
 

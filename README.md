@@ -37,13 +37,109 @@ ia-harness/
 │   ├── before-tool.ps1               # RBAC dispatcher (bloquea comandos peligrosos)
 │   └── after-tool.ps1                # Auditoría de ejecución de herramientas
 │
+├── scripts/                          # Scripts de instalación global en el host
+│   ├── install-harness.ps1           # Instalador para Windows (PowerShell)
+│   └── install-harness.sh            # Instalador para Linux / macOS (Bash)
+│
 ├── GEMINI.md                         # Entry point para Gemini / Antigravity
 ├── settings.example.json             # Plantilla sanitizada de configuración MCP y hooks
 │
 └── opencode/                         # Motor OpenCode
     ├── opencode.jsonc                # Definición de agentes, permisos y MCPs
     ├── AGENTS.md                     # Directrices operativas de OpenCode
-    └── .agents/skills/               # Skills locales instaladas (26 skills)
+    └── .agents/skills/               # Catálogo canónico de skills de distribución (26 skills)
+```
+
+---
+
+## 💻 Protocolo de Instalación y Runtime a Nivel de Ordenador (Host-Level Setup)
+
+Este repositorio opera bajo el principio de **Distribución Centralizada vs. Ejecución Global en Host**:
+
+```mermaid
+flowchart LR
+    subgraph Repo["📦 Repositorio ia-harness (Distribución / Fuente de Verdad)"]
+        direction TB
+        R1["opencode/.agents/skills/ (26 skills)"]
+        R2[".agent/workflows/ (7 workflows)"]
+        R3["hooks/ (Hooks de runtime)"]
+        R4[".specify/ (Constitución & Templates)"]
+        R5["GEMINI.md"]
+        R6["opencode/opencode.jsonc"]
+    end
+
+    subgraph Host["💻 Runtime Global en el Host (Máquina del Usuario)"]
+        direction TB
+        subgraph GeminiPaths["~/.gemini/ (Gemini / Antigravity)"]
+            G1["~/.gemini/.agent/skills/"]
+            G2["~/.gemini/.agent/workflows/"]
+            G3["~/.gemini/hooks/"]
+            G4["~/.gemini/.specify/"]
+            G5["~/.gemini/GEMINI.md"]
+            G6["~/.gemini/settings.json"]
+        end
+        subgraph OpenCodePaths["Host Global (OpenCode)"]
+            O1["~/.agents/skills/"]
+            O2["~/.config/opencode/opencode.json"]
+        end
+    end
+
+    Repo -->|"install-harness.ps1\ninstall-harness.sh"| Host
+```
+
+### Separación entre Repositorio y Host Runtime
+
+1. **Repositorio `ia-harness` (Distribución y Fuente de Verdad)**:
+   - Contiene la definición oficial y canónica de las 26 skills, los 7 workflows de Speckit, los hooks operacionales, plantillas y archivos de gobernanza.
+   - **No debe utilizarse como runtime directo ni referenciarse con rutas relativas (`./.agents/skills`)** dentro de proyectos de desarrollo o repositorios analizados.
+   
+2. **Runtime en la Máquina (Host Global Paths)**:
+   - **Gemini / Antigravity**: Lee sus directivas, workflows y skills desde `~/.gemini/` (`~/.gemini/.agent/skills/`, `~/.gemini/hooks/`, `~/.gemini/.agent/workflows/`, etc.).
+   - **OpenCode**: Resuelve las skills exclusivamente desde `~/.agents/skills/` y su configuración desde `~/.config/opencode/opencode.json`.
+   - Garantiza que cualquier proyecto que abras en tu equipo herede instantáneamente todas las habilidades sin ensuciar el repositorio de la aplicación ni duplicar carpetas de skills.
+
+### ⚠️ Instrucciones para Agentes de IA
+
+Si eres un modelo de lenguaje o agente autónomo (Antigravity, Gemini CLI, OpenCode, Claude Code) interactuando con este repositorio:
+- **NUNCA** configures rutas relativas `./.agents/skills` en archivos de proyecto ni intentes resolver skills desde el directorio de trabajo local del proyecto analizado.
+- **Antes de comenzar a operar en una máquina**, debes asegurarte de que los assets del harness se encuentren instalados en las rutas globales del usuario (`~/.gemini/` y `~/.agents/skills/`).
+- Si detectas que las rutas globales no existen o faltan skills, ejecuta el script instalador correspondiente a la plataforma (`scripts/install-harness.ps1` en Windows o `scripts/install-harness.sh` en Linux/macOS).
+
+### Scripts de Instalación Automatizada
+
+El repositorio incluye instaladores idempotentes para Windows y sistemas Unix:
+
+#### Windows (PowerShell)
+```powershell
+# Instalar todo (Gemini + OpenCode)
+powershell -ExecutionPolicy Bypass -File .\scripts\install-harness.ps1
+
+# Instalar solo para Gemini / Antigravity
+powershell -ExecutionPolicy Bypass -File .\scripts\install-harness.ps1 -Engine Gemini
+
+# Instalar solo para OpenCode
+powershell -ExecutionPolicy Bypass -File .\scripts\install-harness.ps1 -Engine OpenCode
+
+# Sobrescribir archivos de configuración existentes (settings.json / opencode.json)
+powershell -ExecutionPolicy Bypass -File .\scripts\install-harness.ps1 -Force
+```
+
+#### Linux / macOS (Bash)
+```bash
+# Dar permisos de ejecución
+chmod +x ./scripts/install-harness.sh
+
+# Instalar todo (Gemini + OpenCode)
+./scripts/install-harness.sh
+
+# Instalar solo para Gemini
+./scripts/install-harness.sh --engine Gemini
+
+# Instalar solo para OpenCode
+./scripts/install-harness.sh --engine OpenCode
+
+# Sobrescribir archivos existentes
+./scripts/install-harness.sh --force
 ```
 
 ---
@@ -113,9 +209,9 @@ El harness integra dos capas de memoria complementarias:
 
 ---
 
-## 📦 Catálogo de Skills Instaladas
+## 📦 Catálogo de Skills Canónicas
 
-Las skills se encuentran organizadas en `opencode/.agents/skills/` y son consumibles por ambos motores:
+Las 26 skills canónicas residen para distribución en `opencode/.agents/skills/`. Al instalarse mediante los scripts de setup, son desplegadas globalmente en el host (`~/.gemini/.agent/skills/` para Gemini y `~/.agents/skills/` para OpenCode):
 
 ### Roles y Metodología
 - [`orchestrator`](file:///c:/Users/ccuero/Desktop/ia-harness/opencode/.agents/skills/orchestrator/SKILL.md): Gobernanza de orquestación pura y despacho.
@@ -162,14 +258,23 @@ El archivo [`settings.example.json`](file:///c:/Users/ccuero/Desktop/ia-harness/
 
 ## 🚀 Guía de Inicio Rápido
 
-1. **Configuración de Variables de Entorno**:
+1. **Instalación Global del Runtime en la Máquina**:
+   - En **Windows (PowerShell)**:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File .\scripts\install-harness.ps1
+     ```
+   - En **Linux / macOS (Bash)**:
+     ```bash
+     chmod +x ./scripts/install-harness.sh && ./scripts/install-harness.sh
+     ```
+2. **Configuración de Variables de Entorno**:
    ```bash
    export GITHUB_TOKEN="tu_personal_access_token"
    ```
-2. **Configuración de Ajustes de MCP**:
+3. **Configuración de Ajustes de MCP**:
    - Copia `settings.example.json` a tu configuración de Antigravity (`~/.gemini/settings.json`) o adapta las variables en `opencode/opencode.jsonc`.
-3. **Verificación de la Constitución**:
+4. **Verificación de la Constitución**:
    - Asegúrate de que `.specify/memory/constitution.md` refleje las reglas de tu proyecto antes de comenzar cualquier sprint.
-4. **Ejecución**:
-   - Con **Gemini / Antigravity**: Inicia el orquestador leyendo `GEMINI.md`.
-   - Con **OpenCode**: Ejecuta `opencode` en la carpeta `opencode/` o pasa `--config opencode/opencode.jsonc`.
+5. **Ejecución de Motores**:
+   - Con **Gemini / Antigravity**: Inicia el orquestador leyendo `~/.gemini/GEMINI.md`.
+   - Con **OpenCode**: Inicia `opencode` en cualquier directorio; resolverá las skills y agentes globales de `~/.agents/skills/` y `~/.config/opencode/`.

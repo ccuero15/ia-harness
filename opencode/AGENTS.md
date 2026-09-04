@@ -18,7 +18,7 @@
 - **engram-doc-coverage**: prohibido escribir comentarios de texto en el código o explicaciones extensas en el chat. Explicar la lógica exclusivamente mediante arquitectura autodescriptiva (nombres semánticos, tipado estricto, abstracciones limpias).
 - **engram-memory-protocol**: registrar estados de diseño, nombres de colas y contratos de eventos en un JSON compacto para sincronizar subagentes sin redundancia de texto.
 - **engram-testing-coverage**: exigir cobertura de pruebas unitarias e integración para flujos asíncronos y workers de colas (BullMQ u otro). Definir casos de borde (fallos de red, reintentos, colisiones de estado).
-- **skill-first (graphify incluido)**: antes de usar cualquier tool de exploración de código (`graphify query`, `graphify path`, `graphify explain`, `grep`, `glob`, etc.) o antes de cualquier tarea operativa (implementación, debugging, diseño, review), el agente **DEBE** cargar primero la skill relevante con la tool nativa `skill` de OpenCode (que expone el `<available_skills>` disponible), o leyendo directamente su `SKILL.md` con `read`. Regla "even 1% chance → invoke" obligatoria.
+- **skill-first (graphify incluido y host-level runtime)**: antes de usar cualquier tool de exploración de código (`graphify query`, `graphify path`, `graphify explain`, `grep`, `glob`, etc.) o antes de cualquier tarea operativa (implementación, debugging, diseño, review), el agente **DEBE** cargar primero la skill relevante con la tool nativa `skill` de OpenCode (que expone el `<available_skills>` disponible), o leyendo directamente su `SKILL.md` desde la ruta global del ordenador (`~/.agents/skills/<skill>/SKILL.md`). **REGLA CRÍTICA**: Las skills se ejecutan y resuelven EXCLUSIVAMENTE desde el directorio global del ordenador (`~/.agents/skills/`), NUNCA como dependencias locales de la carpeta del proyecto o repositorio analizado. Regla "even 1% chance → invoke" obligatoria.
 - **superpowers-mandate**: ningún agente (primario o subagente) puede iniciar ejecución operativa o de diseño sin invocar primero las skills/tools MCP aplicables. Todo bloque de ejecución debe estar respaldado por la carga en contexto de su skill correspondiente.
 - **tdd-mandatory**: todo cambio de comportamiento (implementación, bugfix, refactor) sigue el ciclo RED → GREEN → REFACTOR. Prohibido escribir código de producción sin un test fallido que lo justifique previamente. El agente de QA debe verificar que existan tests antes de aprobar cualquier entrega.
 - **subagent-only-orchestrator**: el agente primario/orquestador **no** ejecuta `write`/`edit`/`patch` sobre código fuente directamente. Toda implementación, modificación o refactor se delega a subagentes vía mención `@agente` (o comando con `subtask: true`). El orquestador solo coordina, revisa y consolida.
@@ -113,15 +113,19 @@ Falla → `<qa_refusal>motivo + diff</qa_refusal>` (circuit breaker ≤2). Ópti
 
 Subagente: `.opencode/agent/documentador.md`. Tras `<qa_verified>`: changelog (Keep a Changelog / Conventional Commits) + descripción de PR (motivación, `impacted_paths`, `breaking_changes`) → `<s5_output>`.
 
-## 8. STARTUP PROTOCOL
+## 8. STARTUP PROTOCOL & RUNTIME GLOBAL
 
 Al inicio de cada sesión: cargar este `AGENTS.md`, listar agentes disponibles en `.opencode/agent/` (y globales en `~/.config/opencode/agent/`), y confirmar el estado del loop actual.
 
-Cuando el requerimiento implique planificación, refactorización, testeo o debugging complejo: leer con `read` el archivo del agente correspondiente (ej. `.opencode/agent/planner.md`, `.opencode/agent/tdd-guide.md`) o delegar vía `@planner` / `@tdd-guide` antes de codificar. Estructura recomendada de librería de agentes/skills/comandos migrada 1:1 desde el harness original:
+> [!IMPORTANT]
+> **Ejecución Global de Skills (Host-Level)**:
+> Todas las skills se ejecutan y resuelven EXCLUSIVAMENTE desde el directorio global del host (`~/.agents/skills/`) y no como dependencias locales del repositorio analizado. La configuración canónica de OpenCode (`~/.config/opencode/opencode.json`) y el archivo `opencode.jsonc` apuntan a `~/.agents/skills`. Ningún proyecto local debe mantener carpetas `.agents/skills` relativas. Si la máquina de trabajo no tiene las skills instaladas, debe ejecutarse previamente `scripts/install-harness.ps1` (Windows) o `scripts/install-harness.sh` (Linux/macOS) desde el repositorio canónico `ia-harness`.
 
-- Subagentes → `.opencode/agent/*.md`
-- Skills → `.opencode/skills/<nombre>/SKILL.md`
-- Comandos (equivalentes a los antiguos `/obsidian-*` y demás workflows) → `.opencode/command/*.md`
+Cuando el requerimiento implique planificación, refactorización, testeo o debugging complejo: leer con `read` el archivo del agente correspondiente (ej. `.opencode/agent/planner.md`, `.opencode/agent/tdd-guide.md`) o delegar vía `@planner` / `@tdd-guide` antes de codificar. Estructura de librería recomendada:
+
+- Subagentes → `~/.config/opencode/agent/*.md` o `.opencode/agent/*.md`
+- Skills → `~/.agents/skills/<nombre>/SKILL.md` (Directorio global del sistema en el host)
+- Comandos → `~/.config/opencode/command/*.md` o `.opencode/command/*.md`
 
 ---
 

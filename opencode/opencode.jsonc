@@ -1,11 +1,10 @@
 {
   "$schema": "https://opencode.ai/config.json",
   // ─── Skills Paths ─────────────────────────────────────────────────────────
-  // Replican la estructura de skills de .gemini/skills/ y .agents/skills/
-  // graphify ya está configurada en la ruta normal de skills (.agents/skills), no requiere entrada extra.
+  // Skills globales a nivel de ordenador (host-level runtime). Prohibidas rutas relativas locales.
   "skills": {
     "paths": [
-      "./.agents/skills",
+      "~/.agents/skills",
       "C:\\Users\\ccuero\\.agents\\skills"
     ]
   },
